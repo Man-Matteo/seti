@@ -50,7 +50,7 @@ for (;;) {
        token = strtok(NULL, s);
    }
 
-  // for (int i = 0; i < index; i++) printf("%s\n", array[i]);
+  for (int i = 0; i < index; i++) printf("%s\n", array[i]);
 
 }
 }
