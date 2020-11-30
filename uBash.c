@@ -18,9 +18,9 @@ funzione che legge da input e divide i comandi
 const int PATH_MAX = 4096; //lib limits.h
 
 void mypwd() {
-char cwd[PATH_MAX];
-getcwd(cwd, sizeof(cwd));
-printf(" %s $ ", cwd);
+   char cwd[PATH_MAX];
+   getcwd(cwd, sizeof(cwd));
+   printf(" %s $ ", cwd);
 }
 
 int main() {
