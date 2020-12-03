@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#define __USE_BSD
 #include <limits.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 
 void mypwd(char* cwd) {
     getcwd(cwd, PATH_MAX);
@@ -10,9 +16,10 @@ void mypwd(char* cwd) {
 
 void mycd(char* cwd, char* argument) {
 
-    if (strcmp(argument, "..") == 0) {
+   argument[strcspn(argument, "\n")] = 0;
+    if (strcmp(argument, "..") == 0 || strcmp(argument, "") == 0 ) {
         printf("Errore .. non disponibile\n");
-        _exit;
+       return;
     }
 
     strcat(cwd,"/");
@@ -20,7 +27,6 @@ void mycd(char* cwd, char* argument) {
     cwd[strcspn(cwd, "\n")] = 0;
 
 }
-
 
 int mytokenizer(char* a, char* s, char** array) {
 
@@ -37,6 +43,37 @@ int mytokenizer(char* a, char* s, char** array) {
     return index;
 }
 
+void myexecargument(char* command, char* argument, char* cwd, int index) {
+    int pid = fork(), execres, nfd, status; /* create a new process */
+
+    	command[strcspn(command, "\n")] = 0;
+    	char cmd[50] = "/bin/";
+    	strcat(cmd, command);
+
+
+    	if(pid<0) perror("fork failed");
+
+    	if(pid==0){
+	    	nfd=open(cwd, O_CREAT | O_RDWR);
+	    	dup2(nfd, 1);
+	    	close(nfd);
+
+
+	    if (index == 1) {
+	        execres = execl(cmd, cmd, NULL);
+	    }
+	    else {
+			 argument[strcspn(argument, "\n")] = 0;
+			 execres=execl(cmd, cmd, argument, NULL);
+		 }
+
+	    if(execres<0) perror("execl failed");
+
+
+    	}
+
+	waitpid(pid, &status, 0);
+}
 
 int main() {
 
@@ -60,36 +97,16 @@ int main() {
         int index = mytokenizer(a, " ", blank);
 
 
-        if (strcmp(blank[0], "cd") == 0) {
+        if (strcmp(blank[0], "\n") == 0) continue;
 
+        if (strcmp(blank[0], "cd") == 0) {
             if (index > 2) {
                 printf("Errore troppi argomenti per cd\n");
                 continue;
             }
            mycd(cwd, blank[1]);
+         } else {
+            myexecargument(blank[0], blank[1], cwd, index);
          }
-
-       }
-   }
-
-
-        /*for (scorro ogni carattere) {
-            if (trovo "$")
-              chiamo funzione $ e sostituisco comando
-            if (trovo "<" || trovo ">" )
-              reindirizzo input/output
-            if (trovo "|")
-              STDOUT comando 1 = STDIN comando 2
-        }
-
-          .....
-
-          for (ogni "parola token") {
-            if (comando 1)
-              chiamo funzione 1
-            if (comando 2)
-              chiamo funzione 2
-
-          .....
-          }
-        */
+    }
+}
